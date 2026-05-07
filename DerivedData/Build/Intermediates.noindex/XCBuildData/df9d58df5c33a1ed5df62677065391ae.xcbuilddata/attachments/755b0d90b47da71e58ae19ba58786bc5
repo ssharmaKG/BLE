@@ -1,0 +1,59 @@
+{
+  "" : {
+    "diagnostics" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScanner-primary.dia",
+    "emit-module-dependencies" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScanner-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScanner-primary-emit-module.dia",
+    "pch" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScanner-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScanner-primary.swiftdeps"
+  },
+  "/Users/shsharma/Desktop/KONRAD/BLE/BLEScanner/BLEScanner/BLEDevice.swift" : {
+    "const-values" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEDevice.swiftconstvalues",
+    "dependencies" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEDevice.d",
+    "diagnostics" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEDevice.dia",
+    "index-unit-output-path" : "/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEDevice.o",
+    "llvm-bc" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEDevice.bc",
+    "object" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEDevice.o",
+    "swift-dependencies" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEDevice.swiftdeps",
+    "swiftmodule" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEDevice~partial.swiftmodule"
+  },
+  "/Users/shsharma/Desktop/KONRAD/BLE/BLEScanner/BLEScanner/BLEScannerApp.swift" : {
+    "const-values" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerApp.swiftconstvalues",
+    "dependencies" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerApp.d",
+    "diagnostics" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerApp.dia",
+    "index-unit-output-path" : "/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerApp.o",
+    "llvm-bc" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerApp.bc",
+    "object" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerApp.o",
+    "swift-dependencies" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerApp.swiftdeps",
+    "swiftmodule" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerApp~partial.swiftmodule"
+  },
+  "/Users/shsharma/Desktop/KONRAD/BLE/BLEScanner/BLEScanner/BLEScannerViewModel.swift" : {
+    "const-values" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerViewModel.swiftconstvalues",
+    "dependencies" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerViewModel.d",
+    "diagnostics" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerViewModel.dia",
+    "index-unit-output-path" : "/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerViewModel.o",
+    "llvm-bc" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerViewModel.bc",
+    "object" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerViewModel.o",
+    "swift-dependencies" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerViewModel.swiftdeps",
+    "swiftmodule" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/BLEScannerViewModel~partial.swiftmodule"
+  },
+  "/Users/shsharma/Desktop/KONRAD/BLE/BLEScanner/BLEScanner/ContentView.swift" : {
+    "const-values" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/ContentView.dia",
+    "index-unit-output-path" : "/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/ContentView~partial.swiftmodule"
+  },
+  "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/shsharma/Desktop/KONRAD/BLE/DerivedData/Build/Intermediates.noindex/BLEScanner.build/Debug-iphoneos/BLEScanner.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}
