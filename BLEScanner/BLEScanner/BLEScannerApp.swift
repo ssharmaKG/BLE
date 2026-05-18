@@ -1,3 +1,10 @@
+//
+//  BLEScannerApp.swift
+//  BLEScanner
+//
+//  Created by Shikha Sharma on 20/04/26.
+//
+
 import SwiftUI
 
 @main
