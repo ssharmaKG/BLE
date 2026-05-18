@@ -11,6 +11,8 @@
 		A10000020000000000000001 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000120000000000000001 /* ContentView.swift */; };
 		A10000030000000000000001 /* BLEScannerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000130000000000000001 /* BLEScannerViewModel.swift */; };
 		A10000040000000000000001 /* BLEDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000140000000000000001 /* BLEDevice.swift */; };
+		A10000050000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000150000000000000001 /* Assets.xcassets */; };
+		A10000060000000000000001 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A10000170000000000000001 /* LaunchScreen.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,7 +21,9 @@
 		A10000120000000000000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A10000130000000000000001 /* BLEScannerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEScannerViewModel.swift; sourceTree = "<group>"; };
 		A10000140000000000000001 /* BLEDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEDevice.swift; sourceTree = "<group>"; };
+		A10000150000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A10000160000000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A10000170000000000000001 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,6 +52,8 @@
 				A10000120000000000000001 /* ContentView.swift */,
 				A10000130000000000000001 /* BLEScannerViewModel.swift */,
 				A10000140000000000000001 /* BLEDevice.swift */,
+				A10000150000000000000001 /* Assets.xcassets */,
+				A10000170000000000000001 /* LaunchScreen.storyboard */,
 				A10000160000000000000001 /* Info.plist */,
 			);
 			path = BLEScanner;
@@ -119,6 +125,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000050000000000000001 /* Assets.xcassets in Resources */,
+				A10000060000000000000001 /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -143,6 +151,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLD_ENABLE_MODULE_DEBUGGING = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -173,6 +182,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
