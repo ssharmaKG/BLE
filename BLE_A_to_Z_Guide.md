@@ -15,8 +15,8 @@ BLE is part of the Bluetooth family, but it is different from classic Bluetooth.
 Classic Bluetooth is commonly used for:
 - continuous audio streaming
 - keyboards
-- mice
-- older wireless accessories
+- mouse
+- other wireless accessories
 
 BLE is commonly used for:
 - smartwatches
@@ -85,24 +85,7 @@ BLE provides:
 
 ---
 
-## 4. BLE vs Classic Bluetooth
-
-| Topic | BLE | Classic Bluetooth |
-|---|---|---|
-| Power usage | Very low | Higher |
-| Best for | Sensors, wearables, health, IoT | Audio, continuous streams |
-| Data style | Small packets | Continuous communication |
-| Discovery model | Advertising and scanning | Pairing-oriented device discovery |
-| Battery devices | Excellent fit | Less ideal for tiny battery devices |
-
-Simple summary:
-
-- **BLE** = light, efficient, sensor-friendly
-- **Classic Bluetooth** = heavier, stream-friendly
-
----
-
-## 5. Where BLE is used
+## 4. Where BLE is used
 
 BLE is used in many categories:
 
@@ -141,11 +124,11 @@ BLE is used in many categories:
 
 ---
 
-## 6. Core BLE concepts
+## 5. Core BLE concepts
 
 To understand BLE properly, these are the most important concepts.
 
-### 6.1 Central and Peripheral
+### 5.1 Central and Peripheral
 
 BLE usually works between:
 
@@ -161,9 +144,26 @@ In our project:
 - **iPhone app = Central**
 - **watch / BLE device = Peripheral**
 
+Code in our project:
+
+```swift
+@MainActor
+final class BLEScannerViewModel: NSObject, ObservableObject {
+    private var centralManager: CBCentralManager!
+    private var peripheralsByID: [UUID: CBPeripheral] = [:]
+
+    override init() {
+        super.init()
+        centralManager = CBCentralManager(delegate: self, queue: .main)
+    }
+}
+```
+
+This shows the phone-side app acting as the BLE central, while discovered devices are represented as `CBPeripheral`.
+
 ---
 
-### 6.2 Advertising
+### 5.2 Advertising
 
 Advertising means a BLE peripheral is broadcasting small packets so nearby central devices can discover it.
 
@@ -179,9 +179,21 @@ Important:
 - some devices appear as unnamed
 - some devices advertise only limited information
 
+Code in our project:
+
+```swift
+let connectable = (advertisementData[CBAdvertisementDataIsConnectable] as? Bool) ?? true
+let serviceUUIDs = (advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID] ?? []).map(\.uuidString)
+let manufacturerData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data
+let localName = advertisementData[CBAdvertisementDataLocalNameKey] as? String
+let txPowerLevel = advertisementData[CBAdvertisementDataTxPowerLevelKey] as? Int
+```
+
+This is how we extract advertisement information while scanning.
+
 ---
 
-### 6.3 Scanning
+### 5.3 Scanning
 
 Scanning means the central device listens for nearby BLE advertisements.
 
@@ -190,9 +202,35 @@ In our app:
 - discovered devices are shown in the list
 - we filter them by type and RSSI
 
+Code in our project:
+
+```swift
+private func startScan() {
+    guard canScan else { return }
+    centralManager.scanForPeripherals(
+        withServices: nil,
+        options: [CBCentralManagerScanOptionAllowDuplicatesKey: true]
+    )
+    isScanning = true
+}
+```
+
+And the discovery callback:
+
+```swift
+func centralManager(
+    _ central: CBCentralManager,
+    didDiscover peripheral: CBPeripheral,
+    advertisementData: [String: Any],
+    rssi RSSI: NSNumber
+) {
+    updateDiscoveredDevice(peripheral: peripheral, advertisementData: advertisementData, rssi: RSSI)
+}
+```
+
 ---
 
-### 6.4 RSSI
+### 5.4 RSSI
 
 RSSI means **Received Signal Strength Indicator**.
 
@@ -210,9 +248,27 @@ Important:
 In our app:
 - we use RSSI as a range filter
 
+Code in our project:
+
+```swift
+var filteredDevices: [ScannedDevice] {
+    devices
+        .filter {
+            let matchesType = showRawDebugMode ? true : enabledDeviceTypes.contains($0.type)
+            return matchesType && Double($0.rssi) >= minimumRSSI
+        }
+        .sorted { lhs, rhs in
+            if lhs.rssi == rhs.rssi {
+                return lhs.displayName < rhs.displayName
+            }
+            return lhs.rssi > rhs.rssi
+        }
+}
+```
+
 ---
 
-### 6.5 GATT
+### 5.5 GATT
 
 GATT stands for **Generic Attribute Profile**.
 
@@ -227,7 +283,7 @@ GATT is built around:
 
 ---
 
-### 6.6 Services
+### 5.6 Services
 
 A **service** is a group of related functionality.
 
@@ -240,9 +296,21 @@ A service answers:
 
 **what kind of capability does this device expose?**
 
+Code in our project:
+
+```swift
+func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+    connectedDeviceID = peripheral.identifier
+    updateConnectionState(.connected, for: peripheral.identifier)
+    peripheral.discoverServices(nil)
+}
+```
+
+Once connected, we ask the device for all services.
+
 ---
 
-### 6.7 Characteristics
+### 5.7 Characteristics
 
 A **characteristic** is an individual data point or operation inside a service.
 
@@ -255,9 +323,20 @@ A characteristic answers:
 
 **what exact value can I read, write, or subscribe to?**
 
+Code in our project:
+
+```swift
+func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+    guard error == nil else { return }
+    peripheral.services?.forEach { peripheral.discoverCharacteristics(nil, for: $0) }
+}
+```
+
+After services are found, we inspect the characteristics inside each service.
+
 ---
 
-### 6.8 Descriptors
+### 5.8 Descriptors
 
 Descriptors add metadata or behavior around a characteristic.
 
@@ -268,7 +347,7 @@ For beginner BLE understanding, services and characteristics matter most.
 
 ---
 
-### 6.9 UUIDs
+### 5.9 UUIDs
 
 BLE uses **UUIDs** to identify services and characteristics.
 
@@ -298,9 +377,31 @@ Examples from our watch:
 
 These often require reverse engineering or vendor documentation.
 
+Code in our project:
+
+```swift
+switch characteristic.uuid.uuidString.uppercased() {
+case "2A37":
+    guard let heartRateReading = metrics.heartRateReading else { return nil }
+    return "BPM \(heartRateReading.bpm)"
+case "FEE3":
+    if let vendorBloodPressureReading = metrics.vendorBloodPressureReading {
+        return "BP \(vendorBloodPressureReading.systolic)/\(vendorBloodPressureReading.diastolic) mmHg"
+    }
+    if let vendorOxygenSaturationReading = metrics.vendorOxygenSaturationReading {
+        return "SpO2 \(vendorOxygenSaturationReading.spo2)%"
+    }
+    return humanReadableVendorPacketSummary(for: value)
+default:
+    return nil
+}
+```
+
+This is the exact place where standard and vendor UUIDs are treated differently.
+
 ---
 
-## 7. Read, Write, Notify, Indicate
+## 6. Read, Write, Notify, Indicate
 
 Characteristics have properties.
 
@@ -325,9 +426,23 @@ In our app:
 - we read readable characteristics
 - we subscribe to notify/indicate characteristics
 
+Code in our project:
+
+```swift
+service.characteristics?.forEach { characteristic in
+    if characteristic.properties.contains(.notify) || characteristic.properties.contains(.indicate) {
+        peripheral.setNotifyValue(true, for: characteristic)
+    }
+
+    if characteristic.properties.contains(.read) {
+        peripheral.readValue(for: characteristic)
+    }
+}
+```
+
 ---
 
-## 8. Standard BLE services we used
+## 7. Standard BLE services we used
 
 In our project, the watch exposed some standard services:
 
@@ -352,9 +467,22 @@ Common characteristics:
 - `2A28` = Software Revision
 - `2A29` = Manufacturer Name
 
+Code in our project:
+
+```swift
+case "2A37":
+    if let value = characteristic.value {
+        healthMetrics.heartRateReading = BLEMetricDecoder.parseHeartRateMeasurement(from: value)
+    }
+case "2A19":
+    if let value = characteristic.value {
+        healthMetrics.batteryLevel = BLEMetricDecoder.parseBatteryLevel(from: value)
+    }
+```
+
 ---
 
-## 9. Proprietary BLE data
+## 8. Proprietary BLE data
 
 Not everything in BLE is standard.
 
@@ -374,9 +502,39 @@ That means:
 
 This is very common in wearables.
 
+Code in our project:
+
+```swift
+static func parseVendorBloodPressure(from characteristic: CBCharacteristic) -> VendorBloodPressureReading? {
+    let uuid = characteristic.uuid.uuidString.uppercased()
+    guard uuid == "FEE3",
+          let value = characteristic.value else {
+        return nil
+    }
+
+    let bytes = [UInt8](value)
+    guard bytes.count >= 8,
+          bytes[0] == 0xFE,
+          bytes[1] == 0xEA,
+          bytes[2] == 0x20,
+          bytes[3] == 0x08 else {
+        return nil
+    }
+
+    return VendorBloodPressureReading(
+        systolic: Int(bytes[6]),
+        diastolic: Int(bytes[7]),
+        sourceUUID: uuid,
+        isExperimental: true
+    )
+}
+```
+
+This is a real example of decoding vendor-specific payloads after identifying a pattern in raw bytes.
+
 ---
 
-## 10. BLE architecture used in our app
+## 9. BLE architecture used in our app
 
 Our app follows this flow:
 
@@ -411,9 +569,24 @@ Our app follows this flow:
 - standard metrics through standard UUIDs
 - vendor metrics through vendor packet parsing
 
+Code in our project:
+
+```swift
+func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+    connectedDeviceID = peripheral.identifier
+    updateConnectionState(.connected, for: peripheral.identifier)
+    peripheral.discoverServices(nil)
+}
+
+func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+    guard error == nil else { return }
+    peripheral.services?.forEach { peripheral.discoverCharacteristics(nil, for: $0) }
+}
+```
+
 ---
 
-## 11. Apple iOS BLE framework
+## 10. Apple iOS BLE framework
 
 On iOS, BLE is handled using **CoreBluetooth**.
 
@@ -435,9 +608,27 @@ In our app:
 - `CBCentralManager` scans and connects
 - `CBPeripheralDelegate` handles services/characteristics/value updates
 
+Code in our project:
+
+```swift
+import CoreBluetooth
+
+@MainActor
+extension BLEScannerViewModel: CBCentralManagerDelegate {
+    func centralManagerDidUpdateState(_ central: CBCentralManager) { ... }
+    func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) { ... }
+}
+
+@MainActor
+extension BLEScannerViewModel: CBPeripheralDelegate {
+    func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) { ... }
+    func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) { ... }
+}
+```
+
 ---
 
-## 12. What we built in this project
+## 11. What we built in this project
 
 Our app is a **BLE Device Explorer / BLE Health Inspector**.
 
@@ -455,7 +646,7 @@ It supports:
 
 ---
 
-## 13. Metrics we read in this app
+## 12. Metrics we read in this app
 
 ### Standard metrics
 - Heart Rate from `2A37`
@@ -472,9 +663,51 @@ This is important because it shows two BLE realities:
 - some data is standardized
 - some data is proprietary and must be inferred
 
+Code in our project:
+
+```swift
+static func parseVendorOxygenSaturation(from characteristic: CBCharacteristic) -> VendorOxygenSaturationReading? {
+    let bytes = [UInt8](value)
+    guard bytes.count >= 6,
+          bytes[0] == 0xFE,
+          bytes[1] == 0xEA,
+          bytes[2] == 0x20,
+          bytes[3] == 0x06 else {
+        return nil
+    }
+
+    return VendorOxygenSaturationReading(
+        spo2: Int(bytes[5]),
+        sourceUUID: uuid,
+        isExperimental: true
+    )
+}
+```
+
+And for stress:
+
+```swift
+static func parseVendorStress(from characteristic: CBCharacteristic) -> VendorStressReading? {
+    let bytes = [UInt8](value)
+    guard bytes.count >= 8,
+          bytes[0] == 0xFE,
+          bytes[1] == 0xEA,
+          bytes[2] == 0x20,
+          bytes[3] == 0x08 else {
+        return nil
+    }
+
+    return VendorStressReading(
+        score: Int(bytes[7]),
+        sourceUUID: uuid,
+        isExperimental: true
+    )
+}
+```
+
 ---
 
-## 14. Advantages of BLE
+## 13. Advantages of BLE
 
 BLE is powerful because it offers:
 - low battery consumption
@@ -486,7 +719,7 @@ BLE is powerful because it offers:
 
 ---
 
-## 15. Limitations of BLE
+## 14. Limitations of BLE
 
 BLE also has limitations:
 
@@ -508,7 +741,7 @@ BLE also has limitations:
 
 ---
 
-## 16. Security in BLE
+## 15. Security in BLE
 
 BLE can support:
 - pairing
@@ -525,7 +758,7 @@ This is one reason a generic BLE scanner may discover a device but still not acc
 
 ---
 
-## 17. Common BLE use cases
+## 16. Common BLE use cases
 
 Here are realistic BLE project use cases:
 
@@ -548,7 +781,7 @@ Here are realistic BLE project use cases:
 
 ---
 
-## 18. Important BLE terms cheat sheet
+## 17. Important BLE terms cheat sheet
 
 ### BLE
 Bluetooth Low Energy
@@ -588,7 +821,7 @@ App sends command/data
 
 ---
 
-## 19. Why BLE matters for modern products
+## 18. Why BLE matters for modern products
 
 BLE is important because it enables:
 - wearables
@@ -605,7 +838,7 @@ Without BLE, many small connected products would either:
 
 ---
 
-## 20. Summary
+## 19. Summary
 
 BLE is a low-power wireless technology built for nearby connected devices that need efficient communication.
 
@@ -636,27 +869,3 @@ In our project, BLE allowed us to:
 That makes this project a strong real-world example of how BLE works in modern product development.
 
 ---
-
-## 21. How this document can be used in your team talk
-
-You can use this document in three ways:
-
-### Technical foundation
-Explain what BLE is and how it works
-
-### Product relevance
-Explain why BLE is used in wearables, health, and IoT
-
-### Project story
-Explain how our app discovers, connects, inspects, and decodes BLE smartwatch data
-
----
-
-## 22. Suggested talk title
-
-**Understanding BLE Through a Real Smartwatch Inspector App**
-
-or
-
-**BLE Device Explorer: Scanning, Connecting, and Decoding Wearable Data**
-
