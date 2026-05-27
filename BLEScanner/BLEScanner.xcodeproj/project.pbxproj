@@ -7,19 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		18ECBD602FC6F6A7007C05EA /* DeviceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18ECBD5F2FC6F6A7007C05EA /* DeviceDetailView.swift */; };
+		4A5F300127053A6100BEE001 /* ScannerHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A5F300027053A6100BEE001 /* ScannerHomeView.swift */; };
+		4A5F300327053A6E00BEE001 /* DeviceRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A5F300227053A6E00BEE001 /* DeviceRow.swift */; };
+		4A5F300527053A7900BEE001 /* SharedUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A5F300427053A7900BEE001 /* SharedUI.swift */; };
 		A10000010000000000000001 /* BLEScannerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000110000000000000001 /* BLEScannerApp.swift */; };
 		A10000020000000000000001 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000120000000000000001 /* ContentView.swift */; };
 		A10000030000000000000001 /* BLEScannerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000130000000000000001 /* BLEScannerViewModel.swift */; };
 		A10000040000000000000001 /* BLEDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000140000000000000001 /* BLEDevice.swift */; };
+		A10000050000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000150000000000000001 /* Assets.xcassets */; };
+		A10000060000000000000001 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A10000170000000000000001 /* LaunchScreen.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		18ECBD5F2FC6F6A7007C05EA /* DeviceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceDetailView.swift; sourceTree = "<group>"; };
+		4A5F300027053A6100BEE001 /* ScannerHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerHomeView.swift; sourceTree = "<group>"; };
+		4A5F300227053A6E00BEE001 /* DeviceRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceRow.swift; sourceTree = "<group>"; };
+		4A5F300427053A7900BEE001 /* SharedUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedUI.swift; sourceTree = "<group>"; };
 		A10000100000000000000001 /* BLEScanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BLEScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000110000000000000001 /* BLEScannerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEScannerApp.swift; sourceTree = "<group>"; };
 		A10000120000000000000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A10000130000000000000001 /* BLEScannerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEScannerViewModel.swift; sourceTree = "<group>"; };
 		A10000140000000000000001 /* BLEDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEDevice.swift; sourceTree = "<group>"; };
+		A10000150000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A10000160000000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A10000170000000000000001 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,8 +58,14 @@
 			children = (
 				A10000110000000000000001 /* BLEScannerApp.swift */,
 				A10000120000000000000001 /* ContentView.swift */,
+				4A5F300027053A6100BEE001 /* ScannerHomeView.swift */,
+				4A5F300227053A6E00BEE001 /* DeviceRow.swift */,
+				18ECBD5F2FC6F6A7007C05EA /* DeviceDetailView.swift */,
+				4A5F300427053A7900BEE001 /* SharedUI.swift */,
 				A10000130000000000000001 /* BLEScannerViewModel.swift */,
 				A10000140000000000000001 /* BLEDevice.swift */,
+				A10000150000000000000001 /* Assets.xcassets */,
+				A10000170000000000000001 /* LaunchScreen.storyboard */,
 				A10000160000000000000001 /* Info.plist */,
 			);
 			path = BLEScanner;
@@ -119,6 +137,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000050000000000000001 /* Assets.xcassets in Resources */,
+				A10000060000000000000001 /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -130,6 +150,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000040000000000000001 /* BLEDevice.swift in Sources */,
+				4A5F300327053A6E00BEE001 /* DeviceRow.swift in Sources */,
+				18ECBD602FC6F6A7007C05EA /* DeviceDetailView.swift in Sources */,
+				4A5F300127053A6100BEE001 /* ScannerHomeView.swift in Sources */,
+				4A5F300527053A7900BEE001 /* SharedUI.swift in Sources */,
 				A10000030000000000000001 /* BLEScannerViewModel.swift in Sources */,
 				A10000020000000000000001 /* ContentView.swift in Sources */,
 				A10000010000000000000001 /* BLEScannerApp.swift in Sources */,
@@ -143,6 +167,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLD_ENABLE_MODULE_DEBUGGING = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -173,6 +198,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
