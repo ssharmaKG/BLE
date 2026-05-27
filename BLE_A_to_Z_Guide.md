@@ -119,7 +119,6 @@ BLE is used in many categories:
 
 ### Consumer electronics
 - remotes
-- some accessories
 - device onboarding tools
 
 ---
@@ -296,18 +295,6 @@ A service answers:
 
 **what kind of capability does this device expose?**
 
-Code in our project:
-
-```swift
-func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-    connectedDeviceID = peripheral.identifier
-    updateConnectionState(.connected, for: peripheral.identifier)
-    peripheral.discoverServices(nil)
-}
-```
-
-Once connected, we ask the device for all services.
-
 ---
 
 ### 5.7 Characteristics
@@ -322,17 +309,6 @@ Examples:
 A characteristic answers:
 
 **what exact value can I read, write, or subscribe to?**
-
-Code in our project:
-
-```swift
-func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-    guard error == nil else { return }
-    peripheral.services?.forEach { peripheral.discoverCharacteristics(nil, for: $0) }
-}
-```
-
-After services are found, we inspect the characteristics inside each service.
 
 ---
 
