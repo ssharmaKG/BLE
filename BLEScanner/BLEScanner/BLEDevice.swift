@@ -9,6 +9,23 @@ import CoreBluetooth
 import Foundation
 import SwiftUI
 
+// MARK: - App vocabulary
+//
+// This file defines the core data structures and decoding helpers used by the app.
+// A useful way to think about it is:
+// - `BLEScannerViewModel.swift` controls the BLE workflow
+// - `ContentView.swift` controls how information is shown
+// - this file explains what the information means
+//
+// In other words, this file answers questions like:
+// - What is a scanned device?
+// - What kinds of device types do we show in the filter?
+// - What does a heart-rate packet look like after decoding?
+// - How do we interpret GOBOULT vendor bytes as BP, SpO2, or stress?
+
+// High-level categories shown in the scanner UI.
+// These are not guaranteed by BLE itself. They are educated guesses
+// made by the app from names, services, and manufacturer data.
 enum DeviceType: String, CaseIterable, Identifiable {
     case wearable
     case audio
@@ -40,6 +57,8 @@ enum DeviceType: String, CaseIterable, Identifiable {
     }
 }
 
+// Tracks where we are in the connection lifecycle for a device.
+// This is what powers the "Connect", "Connecting", "Connected", and "Failed" UI states.
 enum DeviceConnectionState {
     case disconnected
     case connecting
@@ -73,6 +92,13 @@ enum DeviceConnectionState {
     }
 }
 
+// Represents one BLE device after we have converted raw CoreBluetooth information
+// into a form that the UI can render easily.
+//
+// It includes:
+// - user-facing data such as display name and RSSI
+// - technical advertisement details for diagnostics
+// - a connection state used by the list and detail navigation
 struct ScannedDevice: Identifiable {
     let id: UUID
     let name: String?
@@ -89,15 +115,20 @@ struct ScannedDevice: Identifiable {
     var connectionState: DeviceConnectionState
 
     var displayName: String {
+        // Many BLE devices do not advertise a readable name.
+        // Instead of showing a blank row, we fall back to a generic label.
         guard let name, !name.isEmpty else { return "Unnamed BLE Device" }
         return name
     }
 
     var identifierText: String {
+        // The peripheral UUID is useful when device names are missing or duplicated.
         id.uuidString
     }
 
     var debugDetails: [String] {
+        // These strings are shown in raw/debug-style UI to help identify
+        // otherwise opaque BLE devices.
         var details: [String] = []
         details.append(isConnectable ? "Connectable" : "Not Connectable")
 
@@ -133,6 +164,8 @@ struct ScannedDevice: Identifiable {
     }
 
     var proximityLabel: String {
+        // RSSI is not true distance, but it is still useful as an approximate
+        // "near vs far" signal for the user.
         switch rssi {
         case -55 ... 0:
             return "Very Near"
@@ -148,6 +181,8 @@ struct ScannedDevice: Identifiable {
 
 extension Data {
     var shortHexString: String {
+        // Converts binary bytes into a short hex preview such as FEEA2008B911003B.
+        // This is handy for logs and debugging proprietary characteristics.
         map { String(format: "%02X", $0) }
             .prefix(16)
             .joined()
@@ -156,6 +191,8 @@ extension Data {
 
 extension Array {
     func chunked(into size: Int) -> [[Element]] {
+        // Breaks an array into equally sized groups.
+        // We use this mostly to display vendor packets in cleaner byte pairs.
         guard size > 0 else { return [] }
 
         var chunks: [[Element]] = []
@@ -172,6 +209,8 @@ extension Array {
     }
 }
 
+// A UI-friendly version of a BLE characteristic.
+// It stores only the strings the detail screen needs to display.
 struct GATTCharacteristicInfo: Identifiable {
     let id = UUID()
     let uuid: String
@@ -179,12 +218,14 @@ struct GATTCharacteristicInfo: Identifiable {
     let valueDescription: String?
 }
 
+// A UI-friendly version of a BLE service.
 struct GATTServiceInfo: Identifiable {
     let id = UUID()
     let uuid: String
     let characteristics: [GATTCharacteristicInfo]
 }
 
+// Standard heart-rate reading decoded from BLE Heart Rate Measurement (2A37).
 struct HeartRateReading {
     let bpm: Int
     let sensorContactDetected: Bool?
@@ -192,12 +233,14 @@ struct HeartRateReading {
     let rrIntervals: [Double]
 }
 
+// Standard blood-pressure reading decoded from a public BLE blood-pressure characteristic.
 struct BloodPressureReading {
     let systolic: Double
     let diastolic: Double
     let meanArterialPressure: Double
 }
 
+// Blood-pressure reading inferred from GOBOULT's proprietary FEE3 packets.
 struct VendorBloodPressureReading {
     let systolic: Int
     let diastolic: Int
@@ -205,29 +248,36 @@ struct VendorBloodPressureReading {
     let isExperimental: Bool
 }
 
+// Standard oxygen-saturation reading decoded from a public BLE pulse-oximeter characteristic.
 struct OxygenSaturationReading {
     let spo2: Double
     let pulseRate: Double?
 }
 
+// Oxygen-saturation reading inferred from GOBOULT's proprietary FEE3 packets.
 struct VendorOxygenSaturationReading {
     let spo2: Int
     let sourceUUID: String
     let isExperimental: Bool
 }
 
+// Generic "stress-like" reading inferred from non-standard characteristics.
 struct StressReading {
     let score: Int
     let sourceUUID: String
     let isExperimental: Bool
 }
 
+// Stress reading specifically decoded from GOBOULT FEE3 packets.
 struct VendorStressReading {
     let score: Int
     let sourceUUID: String
     let isExperimental: Bool
 }
 
+// Temporary exploratory bucket for private/vendor characteristics.
+// We used this while observing which raw values changed when a measurement
+// was triggered on the watch.
 struct VendorHealthMetricCandidate: Identifiable {
     let id = UUID()
     let sourceUUID: String
@@ -238,6 +288,9 @@ struct VendorHealthMetricCandidate: Identifiable {
     let recentValueSummaries: [String]
 }
 
+// All currently decoded values for the connected device.
+// Keeping them in one structure makes it easy to reset the screen when
+// the connection changes and easy to pass the whole metric state around.
 struct HealthMetricsState {
     var batteryLevel: Int?
     var heartRateReading: HeartRateReading?
@@ -250,6 +303,8 @@ struct HealthMetricsState {
     var vendorHealthCandidates: [VendorHealthMetricCandidate] = []
 
     mutating func reset() {
+        // Called when connection state changes so old device data does not leak
+        // into the next device's detail screen.
         batteryLevel = nil
         heartRateReading = nil
         bloodPressureReading = nil
@@ -262,6 +317,8 @@ struct HealthMetricsState {
     }
 }
 
+// Maps manufacturer IDs from advertisement data into readable company names.
+// This is helpful when the peripheral does not advertise a friendly device name.
 enum BluetoothCompanyIdentifier {
     static func companyName(from manufacturerData: Data?) -> String? {
         guard let manufacturerData, manufacturerData.count >= 2 else { return nil }
@@ -291,6 +348,9 @@ enum BluetoothCompanyIdentifier {
 
 enum DeviceTypeClassifier {
     static func classify(name: String?, advertisementData: [String: Any]) -> DeviceType {
+        // This classifier is a best-effort guess based on advertisement name
+        // and standard service UUIDs. BLE advertisements are often incomplete,
+        // so "unknown" is still a valid and common result.
         let serviceUUIDs = advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID] ?? []
         let lowercasedName = name?.lowercased() ?? ""
         let manufacturerData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data
@@ -329,6 +389,8 @@ enum DeviceTypeClassifier {
     }
 
     private static func isLikelyBeacon(serviceUUIDs: [CBUUID], manufacturerData: Data?, name: String) -> Bool {
+        // Beacons often advertise either a known beacon service UUID
+        // or a recognizable manufacturer-data layout.
         if name.contains("beacon") || serviceUUIDs.contains(CBUUID(string: "FEAA")) {
             return true
         }
@@ -342,12 +404,18 @@ enum DeviceTypeClassifier {
     }
 }
 
+// MARK: - BLE decoding
+//
+// These helpers translate raw characteristic bytes into values that humans can understand.
+// For standard UUIDs we follow Bluetooth-defined formats.
+// For private GOBOULT UUIDs we use patterns observed during live testing.
 enum BLEMetricDecoder {
     static func decodedValueDescription(
         for characteristic: CBCharacteristic,
         metrics: HealthMetricsState,
         bodySensorLocation: String?
     ) -> String? {
+        // This helper turns raw BLE values into text that the UI can show directly.
         switch characteristic.uuid.uuidString.uppercased() {
         case "2A37":
             guard let heartRateReading = metrics.heartRateReading else { return nil }
@@ -358,11 +426,14 @@ enum BLEMetricDecoder {
             guard let bloodPressureReading = metrics.bloodPressureReading else { return nil }
             return String(format: "%.0f/%.0f mmHg", bloodPressureReading.systolic, bloodPressureReading.diastolic)
         case "FEE3":
-            if let vendorBloodPressureReading = metrics.vendorBloodPressureReading {
+            if let vendorBloodPressureReading = parseVendorBloodPressure(from: characteristic) {
                 return "BP \(vendorBloodPressureReading.systolic)/\(vendorBloodPressureReading.diastolic) mmHg"
             }
-            if let vendorOxygenSaturationReading = metrics.vendorOxygenSaturationReading {
+            if let vendorOxygenSaturationReading = parseVendorOxygenSaturation(from: characteristic) {
                 return "SpO2 \(vendorOxygenSaturationReading.spo2)%"
+            }
+            if let vendorStressReading = parseVendorStress(from: characteristic) {
+                return "Stress \(vendorStressReading.score)"
             }
             guard let value = characteristic.value, !value.isEmpty else { return nil }
             return humanReadableVendorPacketSummary(for: value)
@@ -394,6 +465,8 @@ enum BLEMetricDecoder {
         let flags = bytes[0]
         var index = 1
 
+        // The first byte is a bit-mask of flags that tells us how the rest
+        // of the payload should be interpreted.
         let isUInt16 = (flags & 0x01) != 0
         let contactSupported = (flags & 0x04) != 0
         let contactDetected = (flags & 0x02) != 0
@@ -438,6 +511,7 @@ enum BLEMetricDecoder {
     static func parseBodySensorLocation(from data: Data) -> String? {
         guard let value = data.first else { return nil }
 
+        // Standard BLE body-sensor locations defined by the Bluetooth spec.
         switch value {
         case 0: return "Other"
         case 1: return "Chest"
@@ -454,6 +528,7 @@ enum BLEMetricDecoder {
         let bytes = [UInt8](data)
         guard bytes.count >= 7 else { return nil }
 
+        // Standard BLE blood-pressure values are encoded as SFLOAT numbers.
         let systolic = parseSFloat(bytes[1], bytes[2])
         let diastolic = parseSFloat(bytes[3], bytes[4])
         let map = parseSFloat(bytes[5], bytes[6])
@@ -469,6 +544,7 @@ enum BLEMetricDecoder {
         let bytes = [UInt8](data)
         guard bytes.count >= 5 else { return nil }
 
+        // In the standard format, the payload stores SpO2 first and pulse rate second.
         let spo2 = parseSFloat(bytes[1], bytes[2])
         let pulseRate = parseSFloat(bytes[3], bytes[4])
 
@@ -486,6 +562,8 @@ enum BLEMetricDecoder {
             return nil
         }
 
+        // This is a fallback heuristic for non-standard wellness values.
+        // It is useful for exploration, but not guaranteed by a public spec.
         return StressReading(
             score: Int(first),
             sourceUUID: uuid,
@@ -501,6 +579,9 @@ enum BLEMetricDecoder {
         }
 
         let bytes = [UInt8](value)
+        // Based on observed GOBOULT packets:
+        // FE EA 20 08 ... .. SYS DIA
+        // where the final two bytes map to systolic / diastolic.
         guard bytes.count >= 8,
               bytes[0] == 0xFE,
               bytes[1] == 0xEA,
@@ -532,11 +613,19 @@ enum BLEMetricDecoder {
         }
 
         let bytes = [UInt8](value)
+        // Observed GOBOULT stress packets share the same vendor header as BP,
+        // but use 0x00 in the penultimate byte and the final byte as the score.
         guard bytes.count >= 8,
               bytes[0] == 0xFE,
               bytes[1] == 0xEA,
               bytes[2] == 0x20,
               bytes[3] == 0x08 else {
+            return nil
+        }
+
+        // Observed GOBOULT stress packets use the 0x08 measurement family,
+        // but unlike BP packets the penultimate byte remains 0x00.
+        guard bytes[6] == 0x00 else {
             return nil
         }
 
@@ -560,6 +649,8 @@ enum BLEMetricDecoder {
         }
 
         let bytes = [UInt8](value)
+        // Observed GOBOULT SpO2 packets use the shorter:
+        // FE EA 20 06 xx SpO2
         guard bytes.count >= 6,
               bytes[0] == 0xFE,
               bytes[1] == 0xEA,
@@ -584,6 +675,9 @@ enum BLEMetricDecoder {
         existing: [VendorHealthMetricCandidate],
         characteristic: CBCharacteristic
     ) -> [VendorHealthMetricCandidate] {
+        // This does not attempt to fully understand a packet.
+        // It simply keeps a useful rolling summary of private data streams
+        // so we can compare packet changes during reverse engineering.
         let uuid = characteristic.uuid.uuidString.uppercased()
         guard let value = characteristic.value,
               !value.isEmpty,
@@ -634,6 +728,8 @@ enum BLEMetricDecoder {
             return "Raw vendor payload • \(value.shortHexString)"
         }
 
+        // This is a debugging helper that explains a vendor packet in a
+        // more readable way before we fully understand its meaning.
         let header = String(format: "%02X%02X%02X", bytes[0], bytes[1], bytes[2])
         let packetType = bytes[3]
         let payload = Array(bytes.dropFirst(4))
@@ -676,6 +772,8 @@ enum BLEMetricDecoder {
     }
 
     private static func parseSFloat(_ lowerByte: UInt8, _ upperByte: UInt8) -> Double {
+        // SFLOAT is a compact BLE numeric format used by several health characteristics.
+        // It stores a mantissa and exponent in 16 bits.
         let raw = UInt16(lowerByte) | (UInt16(upperByte) << 8)
         var mantissa = Int16(raw & 0x0FFF)
         let exponentNibble = Int8((raw & 0xF000) >> 12)
@@ -693,6 +791,7 @@ enum BLEMetricDecoder {
     }
 
     private static func isLikelyVendorHealthCharacteristic(_ uuid: String) -> Bool {
+        // Private UUIDs observed on the watch that may carry health/wellness data.
         [
             "FEE1", "FEE2", "FEE3", "FEE4", "FEE5", "FEE6",
             "FEC9", "FEA1", "0003", "0004", "AE01", "AE02"
@@ -700,6 +799,8 @@ enum BLEMetricDecoder {
     }
 
     private static func vendorMetricLabel(for uuid: String, value: Data) -> String {
+        // Best-effort labeling for private characteristics so the raw debug view
+        // is easier to interpret during demos and testing.
         if uuid == "FEE3" {
             if let packetType = vendorPacketType(for: value) {
                 switch packetType {
@@ -746,6 +847,7 @@ enum BLEMetricDecoder {
     }
 
     private static func vendorMetricValueSummary(for value: Data) -> String {
+        // Produces a compact readable summary from raw private bytes.
         if looksLikeVendorHealthPacket(value) {
             return humanReadableVendorPacketSummary(for: value)
         }
@@ -768,11 +870,14 @@ enum BLEMetricDecoder {
     }
 
     private static func looksLikeVendorHealthPacket(_ value: Data) -> Bool {
+        // The GOBOULT health packets we observed all started with FE EA 20.
         let bytes = [UInt8](value)
         return bytes.count >= 4 && bytes[0] == 0xFE && bytes[1] == 0xEA && bytes[2] == 0x20
     }
 
     private static func vendorPacketType(for value: Data) -> UInt8? {
+        // The fourth byte has been useful for splitting packet families
+        // such as "short status packet" and "measurement packet".
         let bytes = [UInt8](value)
         guard bytes.count >= 4 else { return nil }
         return bytes[3]

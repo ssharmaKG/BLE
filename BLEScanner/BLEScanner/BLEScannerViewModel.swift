@@ -9,20 +9,46 @@ import CoreBluetooth
 import Foundation
 import SwiftUI
 
+// MARK: - BLE central controller
+//
+// This view model is the main coordinator of the app.
+// It sits between:
+// - CoreBluetooth, which delivers raw BLE events
+// - SwiftUI, which needs simple published state to render screens
+//
+// Responsibilities of this file:
+// 1. scan for peripherals
+// 2. connect to the selected peripheral
+// 3. discover services and characteristics
+// 4. read or subscribe to values
+// 5. decode those values into friendly health metrics
+// 6. publish simplified models for the UI
+
 @MainActor
 final class BLEScannerViewModel: NSObject, ObservableObject {
+    // These published properties drive the SwiftUI screens.
+    // Whenever one of these values changes, the UI refreshes automatically.
     @Published private(set) var devices: [ScannedDevice] = []
+    // The active filter selection chosen by the user on the home screen.
     @Published var enabledDeviceTypes: Set<DeviceType> = Set(DeviceType.allCases)
+    // Minimum RSSI threshold used by the range slider.
     @Published var minimumRSSI: Double = -80
     @Published private(set) var isScanning = false
     @Published private(set) var bluetoothState: CBManagerState = .unknown
+    // Holds the currently connected device so the UI can highlight it and navigate to details.
     @Published private(set) var connectedDeviceID: UUID?
+    // Flat, UI-friendly GATT model shown on the detail screen.
     @Published private(set) var discoveredServices: [GATTServiceInfo] = []
+    // Raw mode ignores type classification and shows everything we discover.
     @Published var showRawDebugMode = true
+    // Standard BLE body sensor location, if the peripheral exposes it.
     @Published private(set) var bodySensorLocation: String?
+    // Central place where decoded health values are stored.
     @Published private(set) var healthMetrics = HealthMetricsState()
 
+    // CoreBluetooth manager for all phone-side BLE operations.
     private var centralManager: CBCentralManager!
+    // Keeps a lookup from UUID -> live CBPeripheral object after discovery.
     private var peripheralsByID: [UUID: CBPeripheral] = [:]
 
     override init() {
@@ -31,10 +57,12 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
     }
 
     var canScan: Bool {
+        // The app only scans when Bluetooth is actually powered on.
         bluetoothState == .poweredOn
     }
 
     var bluetoothStateText: String {
+        // Human-readable text for the status pill shown in the header.
         switch bluetoothState {
         case .poweredOn:
             return isScanning ? "Scanning Active" : "Bluetooth Ready"
@@ -54,14 +82,17 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
     }
 
     var bluetoothStateIcon: String {
+        // Symbol used in the header status pill.
         canScan ? "bolt.horizontal.circle.fill" : "bolt.horizontal.circle"
     }
 
     var bluetoothStateColor: Color {
+        // Simple visual cue for "ready" vs "needs attention".
         canScan ? .green : .orange
     }
 
     var currentRangeLabel: String {
+        // Converts the raw RSSI slider number into a friendlier range description.
         let threshold = Int(minimumRSSI)
         switch threshold {
         case -55 ... 0:
@@ -76,6 +107,8 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
     }
 
     var filteredDevices: [ScannedDevice] {
+        // This is the exact list shown on the home screen.
+        // We first apply the current filters, then sort stronger signals to the top.
         devices
             .filter {
                 let matchesType = showRawDebugMode ? true : enabledDeviceTypes.contains($0.type)
@@ -90,15 +123,18 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
     }
 
     func startScanningIfPossible() {
+        // Safe entry point used by the UI when the screen appears.
         guard canScan, !isScanning else { return }
         startScan()
     }
 
     func toggleScan() {
+        // Used by the main scan button.
         isScanning ? stopScan() : startScan()
     }
 
     func toggleDeviceType(_ type: DeviceType) {
+        // Multi-select toggle used by the device-type chips.
         if enabledDeviceTypes.contains(type) {
             enabledDeviceTypes.remove(type)
         } else {
@@ -107,10 +143,12 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
     }
 
     func toggleRawDebugMode() {
+        // Lets the user switch between categorized display and raw BLE inspection.
         showRawDebugMode.toggle()
     }
 
     func actionTitle(for device: ScannedDevice) -> String {
+        // Button title in the device list depends on connection state.
         switch device.connectionState {
         case .connected:
             return "View Details"
@@ -124,6 +162,7 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
     }
 
     var connectedDeviceName: String? {
+        // Convenience lookup for screens that only know the connected UUID.
         guard let connectedDeviceID,
               let device = devices.first(where: { $0.id == connectedDeviceID }) else {
             return nil
@@ -133,9 +172,12 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
     }
 
     func device(for id: UUID) -> ScannedDevice? {
+        // Shared lookup used by the detail screen.
         devices.first(where: { $0.id == id })
     }
 
+    // These computed properties expose the current metrics in a convenient way
+    // so views do not need to know the full internal structure of `healthMetrics`.
     var batteryLevel: Int? { healthMetrics.batteryLevel }
     var heartRateReading: HeartRateReading? { healthMetrics.heartRateReading }
     var bloodPressureReading: BloodPressureReading? { healthMetrics.bloodPressureReading }
@@ -147,6 +189,8 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
     var vendorHealthCandidates: [VendorHealthMetricCandidate] { healthMetrics.vendorHealthCandidates }
 
     func handleTap(on device: ScannedDevice) {
+        // Home-screen row action:
+        // if we still have the live CoreBluetooth peripheral object, connect to it.
         guard let peripheral = peripheralsByID[device.id] else { return }
 
         switch device.connectionState {
@@ -161,11 +205,14 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
 
     private func startScan() {
         guard canScan else { return }
+        // We scan for all BLE peripherals instead of restricting by service UUID.
+        // This makes the app behave more like a BLE explorer / inspector.
         centralManager.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
         isScanning = true
     }
 
     private func stopScan() {
+        // Stops listening for BLE advertisements.
         centralManager.stopScan()
         isScanning = false
     }
@@ -175,6 +222,8 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
             stopScan()
         }
 
+        // When the user picks a new device, clear the previously shown services
+        // and metrics so the next detail screen starts fresh.
         resetConnectionData()
         updateConnectionState(.connecting, for: peripheral.identifier)
         peripheral.delegate = self
@@ -186,6 +235,8 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
         advertisementData: [String: Any],
         rssi RSSI: NSNumber
     ) {
+        // Advertisement data is the small packet the BLE device sends before we connect.
+        // We use it to classify the device and show hints in the list.
         let deviceType = DeviceTypeClassifier.classify(
             name: peripheral.name ?? (advertisementData[CBAdvertisementDataLocalNameKey] as? String),
             advertisementData: advertisementData
@@ -220,6 +271,8 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
 
         peripheralsByID[peripheral.identifier] = peripheral
 
+        // If we have already seen this device, update its latest signal/data.
+        // Otherwise add it as a new row in the scanner list.
         if let index {
             devices[index] = device
         } else {
@@ -228,15 +281,19 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
     }
 
     private func updateConnectionState(_ state: DeviceConnectionState, for deviceID: UUID) {
+        // Keeps list rows and detail navigation in sync with the actual BLE state.
         guard let index = devices.firstIndex(where: { $0.id == deviceID }) else { return }
         devices[index].connectionState = state
         connectedDeviceID = state == .connected ? deviceID : (connectedDeviceID == deviceID ? nil : connectedDeviceID)
         if state != .connected {
+            // Metrics and discovered services belong to one connected device.
+            // Clear them when the connection is lost or fails.
             resetConnectionData()
         }
     }
 
     private func resetConnectionData() {
+        // Clears all connection-specific data for a fresh detail screen.
         discoveredServices = []
         bodySensorLocation = nil
         healthMetrics.reset()
@@ -245,6 +302,8 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
     private func refreshDiscoveredServices(from peripheral: CBPeripheral) {
         guard let services = peripheral.services else { return }
 
+        // Convert CoreBluetooth service/characteristic objects into simpler view models
+        // that the UI can show directly.
         discoveredServices = services.map { service in
             let characteristics = (service.characteristics ?? []).map { characteristic in
                 GATTCharacteristicInfo(
@@ -266,6 +325,7 @@ final class BLEScannerViewModel: NSObject, ObservableObject {
     }
 
     private func logCharacteristicEvent(_ event: String, characteristic: CBCharacteristic) {
+        // Developer-facing log to help inspect raw and decoded BLE packets.
         let uuid = characteristic.uuid.uuidString.uppercased()
         let serviceUUID = characteristic.service?.uuid.uuidString.uppercased() ?? "UnknownService"
         let hexValue = characteristic.value?.shortHexString ?? "nil"
@@ -284,6 +344,8 @@ extension BLEScannerViewModel: CBCentralManagerDelegate {
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         bluetoothState = central.state
         if central.state == .poweredOn {
+            // As soon as Bluetooth becomes available, begin scanning automatically
+            // so the user sees nearby devices right away.
             startScanningIfPossible()
         } else {
             stopScan()
@@ -296,21 +358,25 @@ extension BLEScannerViewModel: CBCentralManagerDelegate {
         advertisementData: [String: Any],
         rssi RSSI: NSNumber
     ) {
+        // Called every time a nearby peripheral advertises while we are scanning.
         updateDiscoveredDevice(peripheral: peripheral, advertisementData: advertisementData, rssi: RSSI)
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         connectedDeviceID = peripheral.identifier
         updateConnectionState(.connected, for: peripheral.identifier)
+        // After connection, ask the peripheral for every service it exposes.
         peripheral.discoverServices(nil)
     }
 
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
+        // If connection fails, keep the app usable by returning to scanning mode.
         updateConnectionState(.failed, for: peripheral.identifier)
         startScanningIfPossible()
     }
 
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
+        // If the device disconnects, clear the detail data and resume scanning.
         updateConnectionState(.disconnected, for: peripheral.identifier)
         startScanningIfPossible()
     }
@@ -320,18 +386,26 @@ extension BLEScannerViewModel: CBCentralManagerDelegate {
 extension BLEScannerViewModel: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         guard error == nil else { return }
+        // Each service contains characteristics, which are the actual data points
+        // like heart rate, battery percentage, or vendor-specific packets.
         peripheral.services?.forEach { peripheral.discoverCharacteristics(nil, for: $0) }
     }
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         guard error == nil else { return }
+        // For every characteristic:
+        // - subscribe if the device can push updates
+        // - read once if the characteristic supports reads
         service.characteristics?.forEach { characteristic in
             if characteristic.properties.contains(.notify) || characteristic.properties.contains(.indicate) {
+                // Notifications let the device push updates to us automatically.
+                // This is how live values like heart rate keep updating.
                 print("[BLE] Subscribing to \(characteristic.uuid.uuidString.uppercased()) on service \(service.uuid.uuidString.uppercased())")
                 peripheral.setNotifyValue(true, for: characteristic)
             }
 
             if characteristic.properties.contains(.read) {
+                // Read means we can request the current value once on demand.
                 print("[BLE] Reading \(characteristic.uuid.uuidString.uppercased()) on service \(service.uuid.uuidString.uppercased())")
                 peripheral.readValue(for: characteristic)
             }
@@ -343,31 +417,42 @@ extension BLEScannerViewModel: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         guard error == nil else { return }
 
+        // This callback is the heart of the app.
+        // Every time the watch/sensor sends or returns data, we decode it here.
         switch characteristic.uuid.uuidString.uppercased() {
         case "2A37":
             if let value = characteristic.value {
+                // Standard BLE heart-rate characteristic.
                 healthMetrics.heartRateReading = BLEMetricDecoder.parseHeartRateMeasurement(from: value)
             }
         case "2A38":
             if let value = characteristic.value {
+                // Standard BLE body-sensor location, such as wrist or chest.
                 bodySensorLocation = BLEMetricDecoder.parseBodySensorLocation(from: value)
             }
         case "2A35":
             if let value = characteristic.value {
+                // Standard BLE blood-pressure measurement if the device exposes it.
                 healthMetrics.bloodPressureReading = BLEMetricDecoder.parseBloodPressureMeasurement(from: value)
             }
         case "2A5E":
             if let value = characteristic.value {
+                // Standard BLE pulse-oximeter style measurement if available.
                 healthMetrics.oxygenSaturationReading = BLEMetricDecoder.parsePulseOximeterMeasurement(from: value)
             }
         case "2A19":
             if let value = characteristic.value?.first {
+                // Battery level is a simple one-byte percentage.
                 healthMetrics.batteryLevel = Int(value)
             }
         default:
+            // Some devices expose extra wellness data on proprietary characteristics.
+            // This is our fallback path for those experimental values.
             healthMetrics.stressReading = BLEMetricDecoder.parseExperimentalStress(from: characteristic)
         }
 
+        // GOBOULT-specific values are carried inside vendor packets on FEE3.
+        // These helpers try to interpret those raw bytes as user-friendly metrics.
         if let vendorBloodPressureReading = BLEMetricDecoder.parseVendorBloodPressure(from: characteristic) {
             healthMetrics.vendorBloodPressureReading = vendorBloodPressureReading
         }
@@ -384,11 +469,14 @@ extension BLEScannerViewModel: CBPeripheralDelegate {
             existing: healthMetrics.vendorHealthCandidates,
             characteristic: characteristic
         )
+
+        // After decoding new values, refresh the detail page model and log the packet.
         logCharacteristicEvent("Updated", characteristic: characteristic)
         refreshDiscoveredServices(from: peripheral)
     }
 
     func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
+        // Called after notification subscription has been enabled or disabled.
         if let error {
             print("[BLE] Notify state failed for \(characteristic.uuid.uuidString.uppercased()): \(error.localizedDescription)")
             return
@@ -401,6 +489,8 @@ extension BLEScannerViewModel: CBPeripheralDelegate {
 
 extension BLEScannerViewModel {
     static var preview: BLEScannerViewModel {
+        // Sample in-memory data for SwiftUI previews.
+        // This makes it possible to design the UI without a real BLE device connected.
         let model = BLEScannerViewModel()
         model.bluetoothState = .poweredOn
         model.isScanning = true

@@ -7,14 +7,28 @@
 
 import SwiftUI
 
+// MARK: - Home screen
+//
+// `ContentView` is the scanner dashboard of the app.
+// It shows:
+// - the scan status
+// - filter controls
+// - the list of discovered BLE devices
+//
+// From here the user can connect to a device, after which the app
+// automatically navigates to a deeper inspection screen.
 struct ContentView: View {
+    // The view model is shared across the app and contains all BLE state.
     @EnvironmentObject private var viewModel: BLEScannerViewModel
+    // Navigation is driven by connected device IDs.
     @State private var navigationPath: [UUID] = []
+    // Used only for UI animation on the home screen hero section.
     @State private var animateHeader = false
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack {
+                // Shared background styling used throughout the app.
                 AppBackground()
 
                 ScrollView {
@@ -31,16 +45,19 @@ struct ContentView: View {
             .navigationTitle("BLE Explorer")
             .navigationBarTitleDisplayMode(.inline)
             .task {
+                // Start scanning when the screen appears if Bluetooth is already ready.
                 viewModel.startScanningIfPossible()
                 animateHeader = true
             }
             .onChange(of: viewModel.connectedDeviceID) { _, connectedID in
                 guard let connectedID else { return }
+                // When a device connects, automatically push its detail screen.
                 if navigationPath.last != connectedID {
                     navigationPath.append(connectedID)
                 }
             }
             .navigationDestination(for: UUID.self) { deviceID in
+                // Each UUID in the navigation path opens one device detail screen.
                 DeviceDetailView(deviceID: deviceID)
                     .environmentObject(viewModel)
             }
@@ -48,6 +65,7 @@ struct ContentView: View {
     }
 
     private var headerSection: some View {
+        // Top summary section with the app title, scan button, and live scanner status.
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 VStack(alignment: .leading, spacing: 6) {
@@ -61,6 +79,7 @@ struct ContentView: View {
                 }
                 Spacer()
                 Button(viewModel.isScanning ? "Stop Scan" : "Start Scan") {
+                    // Manual scan control in case the user wants to pause discovery.
                     viewModel.toggleScan()
                 }
                 .font(.subheadline.weight(.semibold))
@@ -100,6 +119,8 @@ struct ContentView: View {
     }
 
     private var filterSection: some View {
+        // Lets the user narrow the list by BLE device type,
+        // or switch to raw debug mode to see everything discovered.
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Device Types")
@@ -129,6 +150,7 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
 
             ScrollView(.horizontal, showsIndicators: false) {
+                // Horizontal chip row keeps the filter UI compact and touch friendly.
                 HStack(spacing: 10) {
                     ForEach(DeviceType.allCases) { type in
                         ToggleChip(
@@ -145,6 +167,8 @@ struct ContentView: View {
     }
 
     private var sliderSection: some View {
+        // RSSI is used here as a rough proximity filter.
+        // Less negative values usually mean a stronger/closer signal.
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Range Filter")
@@ -157,6 +181,7 @@ struct ContentView: View {
             }
 
             Slider(value: $viewModel.minimumRSSI, in: -100 ... -40, step: 5)
+                // The slider gives a simple UX for signal-strength filtering.
                 .tint(Color(red: 0.11, green: 0.43, blue: 0.95))
 
             HStack {
@@ -173,6 +198,8 @@ struct ContentView: View {
     }
 
     private var deviceListSection: some View {
+        // Main scanner results area showing every visible peripheral
+        // after the current filters have been applied.
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Nearby Devices")
@@ -197,6 +224,7 @@ struct ContentView: View {
                 )
             } else {
                 LazyVStack(spacing: 12) {
+                    // We use LazyVStack instead of List to keep the custom card UI stable.
                     ForEach(viewModel.filteredDevices) { device in
                         DeviceRow(
                             device: device,
@@ -213,6 +241,8 @@ struct ContentView: View {
     }
 
     private func handleDeviceAction(_ device: ScannedDevice) {
+        // If already connected, just reopen the detail screen.
+        // Otherwise ask the view model to connect.
         if device.connectionState == .connected {
             if navigationPath.last != device.id {
                 navigationPath.append(device.id)
@@ -224,6 +254,7 @@ struct ContentView: View {
     }
 
     private func statusPill(title: String, systemImage: String, tint: Color) -> some View {
+        // Reusable little status badge used in the header.
         HStack(spacing: 8) {
             Image(systemName: systemImage)
                 .symbolEffect(.pulse.byLayer, isActive: viewModel.isScanning)
@@ -240,6 +271,7 @@ struct ContentView: View {
     }
 
     private func compactStatCard(title: String, value: String) -> some View {
+        // Small metric card used for top-line scanner stats.
         VStack(alignment: .leading, spacing: 4) {
             Text(title.uppercased())
                 .font(.caption2.weight(.bold))
@@ -257,6 +289,7 @@ struct ContentView: View {
     }
 
     private var scanningHero: some View {
+        // Decorative hero row that also communicates scan state visually.
         HStack(spacing: 14) {
             ZStack {
                 Circle()
@@ -292,12 +325,14 @@ struct ContentView: View {
 }
 
 private struct ToggleChip: View {
+    // Reusable chip button for device-type filtering.
     let title: String
     let isOn: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
+            // The filled state makes it obvious which categories are active.
             HStack(spacing: 8) {
                 Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
                     .font(.caption.weight(.bold))
@@ -333,6 +368,7 @@ private struct ToggleChip: View {
 }
 
 private struct DeviceRow: View {
+    // One row in the scanner list representing a discovered BLE peripheral.
     let device: ScannedDevice
     let isSelected: Bool
     let actionTitle: String
@@ -340,6 +376,7 @@ private struct DeviceRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Top row shows icon, readable name, category, and connection status.
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 10) {
@@ -365,6 +402,8 @@ private struct DeviceRow: View {
             }
 
             HStack {
+                // Signal strength is useful because many BLE devices have no friendly name,
+                // so RSSI becomes another clue for identifying the device nearby.
                 Label("RSSI \(device.rssi) dBm", systemImage: "antenna.radiowaves.left.and.right")
                 Spacer()
                 Text(device.proximityLabel)
@@ -379,6 +418,8 @@ private struct DeviceRow: View {
             }
 
             if device.name == nil || device.name?.isEmpty == true || !device.debugDetails.isEmpty {
+                // For unclear or vendor-specific devices, show extra advertisement hints
+                // such as services, company name, and manufacturer bytes.
                 ForEach(device.debugDetails, id: \.self) { detail in
                     Text(detail)
                         .font(.caption2)
@@ -387,6 +428,7 @@ private struct DeviceRow: View {
             }
 
             Button(actionTitle, action: action)
+                // Main row action: connect, retry, or reopen details.
                 .font(.subheadline.weight(.semibold))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
@@ -419,6 +461,8 @@ private struct DeviceRow: View {
 }
 
 private struct DeviceDetailView: View {
+    // Detail screen for one connected device.
+    // It combines human-readable health metrics with lower-level GATT inspection.
     @EnvironmentObject private var viewModel: BLEScannerViewModel
     let deviceID: UUID
 
@@ -428,6 +472,7 @@ private struct DeviceDetailView: View {
 
     var body: some View {
         ZStack {
+            // Reuse the same visual background as the home screen for continuity.
             AppBackground()
 
             ScrollView {
@@ -445,6 +490,7 @@ private struct DeviceDetailView: View {
     }
 
     private var detailHeader: some View {
+        // Summary header for the selected BLE device.
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
                 Image(systemName: detailIconName)
@@ -467,6 +513,8 @@ private struct DeviceDetailView: View {
             }
 
             if let device {
+                // These details are especially useful because BLE devices often expose
+                // a UUID and advertisement hints even when they do not expose a nice name.
                 Text("RSSI \(device.rssi) dBm • \(device.proximityLabel)")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -486,6 +534,7 @@ private struct DeviceDetailView: View {
     }
 
     private func serviceTitle(for uuid: String) -> String {
+        // Friendly names for common standard and observed vendor services.
         switch uuid.uppercased() {
         case "180D": return "Heart Rate"
         case "180F": return "Battery Service"
@@ -499,6 +548,7 @@ private struct DeviceDetailView: View {
     }
 
     private func characteristicTitle(for uuid: String) -> String {
+        // Friendly names for common standard and observed vendor characteristics.
         switch uuid.uppercased() {
         case "2A37": return "Heart Rate Measurement"
         case "2A38": return "Body Sensor Location"
@@ -524,6 +574,8 @@ private struct DeviceDetailView: View {
     }
 
     private var exposedMetricsSection: some View {
+        // The user-friendly summary of values we could decode from the device.
+        // Some are standard BLE metrics, while some come from vendor packets.
         VStack(alignment: .leading, spacing: 12) {
             Text("Exposed Health Metrics")
                 .font(.headline.weight(.semibold))
@@ -562,6 +614,8 @@ private struct DeviceDetailView: View {
             )
 
             Text("Tap the measurement you want on the watch to fetch and update these metrics.")
+                // Some devices only send fresh values when the measurement is triggered
+                // from the watch itself, so this note sets the right expectation.
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -569,6 +623,7 @@ private struct DeviceDetailView: View {
     }
 
     private var bloodPressureValueText: String {
+        // Prefer standard BLE BP if available, otherwise fall back to the vendor decode.
         if let bloodPressureReading = viewModel.bloodPressureReading {
             return String(format: "%.0f/%.0f mmHg", bloodPressureReading.systolic, bloodPressureReading.diastolic)
         }
@@ -581,6 +636,7 @@ private struct DeviceDetailView: View {
     }
 
     private var oxygenValueText: String {
+        // Prefer standard pulse-ox data if available, otherwise use the vendor packet mapping.
         if let oxygenSaturationReading = viewModel.oxygenSaturationReading {
             if let pulseRate = oxygenSaturationReading.pulseRate {
                 return String(format: "%.0f%% • Pulse %.0f", oxygenSaturationReading.spo2, pulseRate)
@@ -596,6 +652,7 @@ private struct DeviceDetailView: View {
     }
 
     private var stressValueText: String {
+        // Stress is usually vendor-defined rather than standardized in BLE.
         if let stressReading = viewModel.stressReading {
             return "\(stressReading.score)"
         }
@@ -608,6 +665,7 @@ private struct DeviceDetailView: View {
     }
 
     private func metricRow(title: String, value: String) -> some View {
+        // Shared UI for each headline metric row.
         HStack {
             HStack(spacing: 10) {
                 Image(systemName: metricIconName(for: title))
@@ -625,6 +683,7 @@ private struct DeviceDetailView: View {
             }
             Spacer()
             Text(value)
+                // Numeric text transition makes live updates feel smoother.
                 .font(.title3.weight(.bold))
                 .foregroundStyle(metricIconColor(for: title))
                 .contentTransition(.numericText())
@@ -632,6 +691,8 @@ private struct DeviceDetailView: View {
     }
 
     private var servicesSection: some View {
+        // Lower-level GATT inspector showing every discovered service
+        // and each characteristic under it.
         VStack(alignment: .leading, spacing: 12) {
             Text("Available Services")
                 .font(.headline.weight(.semibold))
@@ -653,6 +714,8 @@ private struct DeviceDetailView: View {
                                     .foregroundStyle(.secondary)
                             } else {
                                 ForEach(service.characteristics) { characteristic in
+                                    // Each characteristic is one readable, writable,
+                                    // or subscribable data point inside the service.
                                     VStack(alignment: .leading, spacing: 2) {
                                         HStack(spacing: 8) {
                                             Image(systemName: "point.3.connected.trianglepath.dotted")
@@ -668,6 +731,8 @@ private struct DeviceDetailView: View {
                                             .foregroundStyle(.secondary)
 
                                         if let valueDescription = characteristic.valueDescription {
+                                            // We show decoded values when we understand them,
+                                            // otherwise the view model falls back to a raw hex summary.
                                             Text("Value: \(valueDescription)")
                                                 .font(.caption2)
                                                 .foregroundStyle(.tertiary)
@@ -690,6 +755,7 @@ private struct DeviceDetailView: View {
     }
 
     private var detailIconName: String {
+        // Match the icon to the device category for easier visual scanning.
         guard let device else { return "sensor.tag.radiowaves.forward" }
         switch device.type {
         case .wearable: return "applewatch.radiowaves.left.and.right"
@@ -703,6 +769,7 @@ private struct DeviceDetailView: View {
     }
 
     private func metricIconName(for title: String) -> String {
+        // Picks a semantic SF Symbol for each metric card.
         switch title {
         case "Battery": return "bolt.fill"
         case "Heart Rate": return "heart.fill"
@@ -714,6 +781,7 @@ private struct DeviceDetailView: View {
     }
 
     private func metricIconColor(for title: String) -> Color {
+        // Keeps the text/icon color language consistent across the detail screen.
         switch title {
         case "Battery": return .green
         case "Heart Rate": return .red
@@ -727,6 +795,7 @@ private struct DeviceDetailView: View {
 
 private extension DeviceRow {
     var deviceIcon: some View {
+        // Visual identity for the device row based on its classified type.
         Image(systemName: iconName)
             .font(.subheadline.weight(.bold))
             .foregroundStyle(iconTint)
@@ -738,6 +807,7 @@ private extension DeviceRow {
     }
 
     var iconName: String {
+        // Picks a type-specific SF Symbol for each scanner row.
         switch device.type {
         case .wearable: return "applewatch.side.right"
         case .audio: return "headphones"
@@ -750,6 +820,7 @@ private extension DeviceRow {
     }
 
     var iconTint: Color {
+        // Type-based color coding for quick visual grouping.
         switch device.type {
         case .wearable: return .pink
         case .audio: return .purple
